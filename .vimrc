@@ -5,6 +5,85 @@ set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " ==================================================================================================
+" Unity stuff 
+" ==================================================================================================
+" TODO: Feels like we should be able to autodetect the type of project
+let s:unity_projs = ['Zeldalike', 'schmoovement']
+let s:unity_include_extensions=[
+    \ 'cs',
+    \ 'txt',
+    \]
+let s:unity_ignore_extensions=[
+    \ 'meta',
+    \ 'asset',
+    \ 'scenetemplate',
+    \ 'dwlt',
+    \]
+let s:unity_include_directories=[
+    \]
+let s:unity_ignore_directories=[
+    \ 'Library',
+    \ 'Logs',
+    \ 'Packages',
+    \ 'ProjectSettings',
+    \ 'UserSettings',
+    \]
+let s:unity_pkg_ignore_directories=[
+    \ 'Library',
+    \ 'Logs',
+    \ 'ProjectSettings',
+    \ 'UserSettings',
+    \]
+
+function! g:UnityProjSetup()
+    echom "Setting RG filter to default to unity!"
+    call g:SkyFilter.new("unity")
+          \ .include_exts(s:unity_include_extensions)
+          \ .include_dirs(s:unity_include_directories)
+          \ .ignore_exts(s:unity_ignore_extensions)
+          \ .ignore_dirs(s:unity_ignore_directories)
+
+    call g:SkyFilter.new("pkg")
+          \ .include_exts(s:unity_include_extensions)
+          \ .include_dirs(s:unity_include_directories)
+          \ .ignore_exts(s:unity_ignore_extensions)
+          \ .ignore_dirs(s:unity_pkg_ignore_directories)
+
+    let g:SkyFilter.default = 'unity'
+    let l:ignore_glob = g:GetIgnoredTypesGlob(s:unity_ignore_extensions)
+    echom l:ignore_glob
+    nnoremap <c-p> :call fzf#vim#gitfiles()<cr>
+endfunction
+
+function! g:GetIgnoredTypesGlob(ignored_exts)
+  let ignore_globs = ""
+  for ext in a:ignored_exts
+    let ignore_globs = ignore_globs . " \':!:*\." . ext . "\'"
+  endfor
+  return ignore_globs
+endfunction
+
+" ==================================================================================================
+" Project context
+" ==================================================================================================
+let g:jerdo_context='DEFAULT'
+
+function! g:SetProjectContext(directory)
+  for project_name in s:unity_projs
+    if (stridx(a:directory, project_name) != -1)
+      let g:jerdo_context='UNITY'
+    endif
+  endfor
+endfunction
+
+function! g:SetUpUserSkyrgFilters()
+  if g:jerdo_context == "UNITY"
+    call UnityProjSetup()
+  endif
+endfunction
+
+call SetProjectContext(getcwd())
+" ==================================================================================================
 " Env management
 " ==================================================================================================
 set rtp+=~/.fzf
@@ -160,7 +239,7 @@ map <C-t><right> :tabn<cr>
 
 " FZF shortcuts
 nnoremap <c-@> :Files<cr>
-nnoremap <c-p> :GFiles<cr>
+" nnoremap <c-p> :GFiles<cr>
 
 " Search helpers
 " Search for word under cursor
@@ -189,7 +268,7 @@ nnoremap <F9> :YcmCompleter RefactorRename
 nnoremap <leader><F1> :Buffers<cr>
 set pastetoggle=<leader><F2>
 nnoremap <leader><F3> :set number!<cr> :SignifyToggle<cr>
-nnoremap <leader><F4> :!./skyrun export code_format<cr> :silent! bufdo e<cr> 
+" nnoremap <leader><F4> :!./skyrun export code_format<cr> :silent! bufdo e<cr> 
 nnoremap <leader><F5> :source $MYVIMRC<cr> :e!<cr>
 " nnoremap <leader><F6>
 " nnoremap <leader><F7>
@@ -200,26 +279,12 @@ nnoremap <leader><F5> :source $MYVIMRC<cr> :e!<cr>
 " nnoremap <leader><F12>
 
 
-
-"call code_format on file write
-function! SkydioCodeFormat()
-  let s:cwd = expand('%:p')
-  " let s:cwd = getcwd()
-  if (stridx(s:cwd, 'aircam') != -1 && stridx(s:cwd, 'COMMIT_EDITMSG') == -1)
-    silent exec '!./skyrun export code_format %'
-    " Calling e makes file reload happen faster (tested on mac, YMMV -- might be omitable)
-    exec 'e'
-    " if using vim, sometimes the screen buffer gets busted, this redraws the screen
-    exec 'redraw!'
-  endif
-endfunction
-
 " call skydio formatter on filewrite
 " TODO: Do not call if not aircam directory
-augroup setup_code_formatter
-  autocmd!
-  autocmd BufWritePost * call SkydioCodeFormat()
-augroup end
+" augroup setup_code_formatter
+  " autocmd!
+  " autocmd BufWritePost * call SkydioCodeFormat()
+" augroup end
 " ==================================================================================================
 " Syntax highlighting
 " ==================================================================================================
@@ -229,6 +294,7 @@ augroup setup_filetypes
   autocmd!
   autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
   autocmd BufNewFile,BufFilePre,BufRead *.cc set filetype=cpp
+  autocmd BufNewFile,BufFilePre,BufRead *.cs set filetype=cs
   autocmd BufNewFile,BufFilePre,BufRead *.java set filetype=java
   autocmd BufNewFile,BufFilePre,BufRead *.py set filetype=python
   autocmd BufNewFile,BufFilePre,BufRead *.djinni set filetype=djinni
@@ -294,63 +360,22 @@ set mouse=a
 " ==================================================================================================
 " FZF Configuration
 " ==================================================================================================
-" TODO: Feels like we should be able to autodetect the type of project
-let s:unity_projs = ['zeldalike', 'schmoovement']
 
 " NOTE: Skyrg's filter class is not available until the plugins are loaded *after* the vimrc is
 " executed. Best way to set this up is to call this function on VimEnter, which happens "after  
 " all the startup stuff, executing the -c cmd arguments, creating all windows, and loading the
 " buffers in them."
 function! SetUpSkyrg()
-  let s:cwd = getcwd()
 
   call g:SkyFilter.new("none")
-        \ .include_filetypes([])
+        \ .include_exts([])
         \ .include_dirs([])
-        \ .ignore_filetypes([])
+        \ .ignore_exts([])
         \ .ignore_dirs([])
   let g:SkyFilter.default = 'none'
 
-  " TODO: Make this break after matching successfully
-  for project_name in s:unity_projs
-    if (stridx(s:cwd, project_name) != -1)
-      echom "Setting RG filter to default to unity!"
+  call g:SetUpUserSkyrgFilters()
 
-      call g:SkyFilter.new("unity")
-            \ .include_filetypes([
-              \ 'cs',
-              \ 'txt',
-              \])
-            \ .include_dirs([])
-            \ .ignore_filetypes([
-              \ 'meta'
-              \ ])
-            \ .ignore_dirs([
-              \ 'Library',
-              \ 'Logs',
-              \ 'Packages',
-              \ 'ProjectSettings',
-              \ 'UserSettings',
-              \ ])
-
-      call g:SkyFilter.new("pkg")
-            \ .include_filetypes([
-              \])
-            \ .include_dirs([
-              \ 'Packages',
-              \ ])
-            \ .ignore_filetypes([
-              \ ])
-            \ .ignore_dirs([
-              \ 'Library',
-              \ 'Logs',
-              \ 'ProjectSettings',
-              \ 'UserSettings',
-              \ ])
-
-      let g:SkyFilter.default = 'unity'
-    endif
-  endfor
 endfunction
 
 augroup create_skyrg_filters 
@@ -369,6 +394,7 @@ let g:signify_sign_change = '~'
 let g:signify_sign_delete = '-'
 let g:signify_update_on_focusgained = 1
 
+" ==================================================================================================
 " ==================================================================================================
 " NERD* Configuration
 " ==================================================================================================
@@ -409,6 +435,7 @@ function! GoogleCppIndent()
     let l:orig_indent = cindent(l:cline_num)
 
     if l:orig_indent == 0 | return 0 | endif
+" ==================================================================================================
 
     let l:pline_num = prevnonblank(l:cline_num - 1)
     let l:pline = getline(l:pline_num)
@@ -456,6 +483,7 @@ function! GoogleCppIndent()
     endwhile
 
     return l:orig_indent
+" ==================================================================================================
 endfunction
 
 

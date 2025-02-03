@@ -139,6 +139,12 @@ fi
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 alias projs="cd /mnt/f/Projects/"
+alias zeld="cd /mnt/f/Projects/Zeldalike"
+alias dotf="cd ~/dotfiles"
+
 
 # Start ssh agent
 eval `ssh-agent -s`
+
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
