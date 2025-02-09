@@ -4,6 +4,14 @@ let g:messages=[]
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
+function! g:GetIgnoredTypesGlob(ignored_exts)
+  let ignore_globs = ""
+  for ext in a:ignored_exts
+    let ignore_globs = ignore_globs . " \':!:*\." . ext . "\'"
+  endfor
+  return ignore_globs
+endfunction
+
 " ==================================================================================================
 " Unity stuff 
 " ==================================================================================================
@@ -34,7 +42,7 @@ let s:unity_pkg_ignore_directories=[
     \ 'ProjectSettings',
     \ 'UserSettings',
     \]
-
+let g:unity_ignore_glob = g:GetIgnoredTypesGlob(s:unity_ignore_extensions)
 function! g:UnityProjSetup()
     echom "Setting RG filter to default to unity!"
     call g:SkyFilter.new("unity")
@@ -50,17 +58,7 @@ function! g:UnityProjSetup()
           \ .ignore_dirs(s:unity_pkg_ignore_directories)
 
     let g:SkyFilter.default = 'unity'
-    let l:ignore_glob = g:GetIgnoredTypesGlob(s:unity_ignore_extensions)
-    echom l:ignore_glob
-    nnoremap <c-p> :call fzf#vim#gitfiles()<cr>
-endfunction
-
-function! g:GetIgnoredTypesGlob(ignored_exts)
-  let ignore_globs = ""
-  for ext in a:ignored_exts
-    let ignore_globs = ignore_globs . " \':!:*\." . ext . "\'"
-  endfor
-  return ignore_globs
+    nnoremap <c-p> :call fzf#vim#gitfiles(g:unity_ignore_glob)<cr>
 endfunction
 
 " ==================================================================================================
@@ -239,7 +237,7 @@ map <C-t><right> :tabn<cr>
 
 " FZF shortcuts
 nnoremap <c-@> :Files<cr>
-" nnoremap <c-p> :GFiles<cr>
+nnoremap <c-p> :GFiles<cr>
 
 " Search helpers
 " Search for word under cursor
