@@ -1,27 +1,31 @@
 work-overlay/
 =============
-Staging area for Phase 2 — files to be moved into the work dotfiles repo
+Staging area for Phase 2 — files to be moved into the private work dotfiles repo
 (jerry-feng-skydio/dotfiles).
 
-Files to copy into work repo root:
-  .bashrc_local         → ~/.bashrc_local (work-specific bash config)
-  .vimrc_local          → ~/.vimrc_local  (vim-lcm rtp, work vim settings)
-  .vimrc_plugins_local  → ~/.vimrc_plugins_local (djinni/kotlin/swift/AnsiEsc)
-  .gitconfig_local      → ~/.gitconfig_local (work git identity)
-  setup.sh              → replaces existing work setup.sh
+Directory layout after migration:
+  ~/.dotfiles-work/
+    personal/              ← git submodule: https://github.com/jfeng94/dotfiles
+    .bashrc_local          ← work bash config
+    .vimrc_local           ← vim-lcm rtp + work skyrg glob-source
+    .vimrc_plugins_local   ← djinni/kotlin/swift/AnsiEsc Vundle plugins
+    .gitconfig_local       ← work git identity + signing key
+    skyrg/
+      global_work.vim      ← Device page, watch_usb()
+      actions_aircam.vim   ← aircam context actions
+      projects_aircam.vim  ← aircam rg filter presets
+    setup.sh               ← delegates to personal/setup.sh, then work-specific steps
 
-Files to remove from work repo root after copying in:
-  .bashrc
-  .vimrc
-  .tmux.conf
-  .gitconfig
-  .inputrc
-  coc-settings.json
-
-Git commands to run in work repo:
+Migration steps (run in ~/.dotfiles-work):
   git submodule add https://github.com/jfeng94/dotfiles personal
   git rm --cached .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
   rm .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
-  # copy in the files from this directory
+  # copy files from this directory into repo root
   git add .
   git commit -m "refactor: delegate to personal dotfiles submodule"
+
+After migration, setup is:
+  cd ~/.dotfiles-work && bash setup.sh --all
+
+Node version:
+  Work setup pins NODE_VERSION=20 (override: NODE_VERSION=22 bash setup.sh --all)
