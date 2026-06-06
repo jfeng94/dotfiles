@@ -63,7 +63,8 @@ git -C "$WORK_DIR" submodule update --init --remote --recursive
 # Step 2 — Run personal setup
 ####################################################################################################
 echo "[work-setup] Running personal setup..."
-bash "$PERSONAL_DIR/setup.sh" --work "${personal_flags[@]:-}"
+# Pin Node version for work machines (override if Skydio infra uses a different version)
+NODE_VERSION="${NODE_VERSION:-20}" bash "$PERSONAL_DIR/setup.sh" --work "${personal_flags[@]:-}"
 
 ####################################################################################################
 # Step 3 — Work-specific symlinks
@@ -79,6 +80,7 @@ if [[ -d /home/skydio/aircam ]]; then
     ln -sfn /home/skydio/aircam ~/aircam
     echo "  ~/aircam → /home/skydio/aircam"
 fi
+
 
 ####################################################################################################
 # Step 4 — Link AI agent context into work repos

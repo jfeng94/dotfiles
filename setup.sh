@@ -111,12 +111,17 @@ DOTFILES_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 echo "[setup] DOTFILES_DIR=$DOTFILES_DIR"
 
 ####################################################################################################
-# Step 0 — Initialize submodules (skyrg-plugin, etc.)
+# Step 0 — Clone/update skyrg-plugin
 ####################################################################################################
-echo "[setup] Initializing submodules..."
-git -C "$DOTFILES_DIR" submodule update --init --recursive
-# Note: skyrg-plugin currently points to jerry-feng-skydio/SkyRG.
-# Update .gitmodules URL once the personal fork is ready.
+SKYRG_DIR="$DOTFILES_DIR/skyrg-plugin"
+SKYRG_URL="https://github.com/jerry-feng-skydio/SkyRG.git"
+if [[ -d "$SKYRG_DIR/.git" ]]; then
+    echo "[setup] Updating skyrg-plugin..."
+    git -C "$SKYRG_DIR" pull --ff-only origin main
+else
+    echo "[setup] Cloning skyrg-plugin..."
+    git clone "$SKYRG_URL" "$SKYRG_DIR"
+fi
 
 ####################################################################################################
 # Step 1 — Symlink dotfiles
@@ -198,12 +203,24 @@ install_packages() {
       linux|wsl)
         sudo apt-get update -y
         sudo apt-get install -y \
-            build-essential cmake python3 python3-dev python3-pip nodejs npm \
+            build-essential cmake python3 python3-dev python3-pip \
             tmux fzf ripgrep git curl wget \
             libncurses5-dev libncursesw5-dev \
             lua5.4 liblua5.4-dev luajit libluajit-5.1-dev \
             libpython3-dev libperl-dev ruby-dev \
-            ctags universal-ctags
+            universal-ctags
+        # Install Node.js 18+ via NodeSource (apt nodejs is too old on Focal)
+        # NODE_VERSION can be overridden by work overlay (e.g. NODE_VERSION=20)
+        NODE_VERSION="${NODE_VERSION:-lts}"
+        local node_major
+        node_major=$(node --version 2>/dev/null | grep -oE '[0-9]+' | head -1)
+        if [[ -z "$node_major" ]] || [[ "$node_major" -lt 18 ]]; then
+            echo "[setup] Installing Node.js ${NODE_VERSION} via NodeSource..."
+            sudo apt-get remove -y nodejs libnode-dev libnode72 2>/dev/null || true
+            sudo apt-get autoremove -y 2>/dev/null || true
+            curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
         ;;
     esac
 }
@@ -310,9 +327,9 @@ fix_coc() {
     fi
     echo "[setup] Fixing coc.nvim (switching to release branch + npm ci)..."
     cd "$coc_dir"
-    git fetch origin
-    git checkout release
-    npm ci
+    git fetch origin release
+    git checkout -B release FETCH_HEAD
+    npm install --legacy-peer-deps
     cd -
     echo "[setup] coc.nvim ready."
 }
@@ -342,12 +359,14 @@ fi
 ####################################################################################################
 install_claude() {
     echo "[setup] Installing Claude Code CLI..."
-    if command -v npm &>/dev/null; then
-        npm install -g @anthropic-ai/claude-code
-        echo "[setup] Claude Code installed: $(claude --version 2>/dev/null || echo 'check PATH')"
-    else
+    if ! command -v npm &>/dev/null; then
         echo "[setup] npm not found — skipping Claude Code install."
+        return
     fi
+    # Install to user-local prefix (no sudo, works without root)
+    npm config set prefix "$HOME/.local"
+    npm install -g @anthropic-ai/claude-code
+    echo "[setup] Claude Code installed: $(claude --version 2>/dev/null || echo 'check PATH — ensure ~/.local/bin is in PATH')"
 }
 
 if $do_claude; then

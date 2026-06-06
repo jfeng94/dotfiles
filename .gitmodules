@@ -1,4 +1,0 @@
-[submodule "skyrg-plugin"]
-	path = skyrg-plugin
-	url = https://github.com/jerry-feng-skydio/SkyRG.git
-	# TODO: update to personal fork URL once SkyRG is moved/cleaned up

@@ -11,7 +11,7 @@ let s:dotfiles_dir = fnamemodify(resolve(expand('<sfile>')), ':h')
 set rtp+=~/.fzf
 
 " SkyRG — personal grep/search plugin
-" Submodule at skyrg-plugin/; update URL to personal fork once available.
+" Cloned to skyrg-plugin/ by setup.sh; always tracks main.
 let &rtp .= ',' . s:dotfiles_dir . '/skyrg-plugin'
 
 " set the runtime path to include Vundle and initialize
@@ -191,4 +191,10 @@ silent! colorscheme gruvbox
 " Loaded last so ~/.vimrc_local can add plugins via rtp, override settings,
 " load work-specific plugins (skyrg, vim-lcm), etc.
 " ==================================================================================================
+" Source personal SkyRG config files
+for s:f in glob(s:dotfiles_dir . '/skyrg/*.vim', 0, 1)
+  execute 'source' s:f
+endfor
+
+" Machine-local overrides (sourced last)
 silent! source ~/.vimrc_local

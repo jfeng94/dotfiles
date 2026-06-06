@@ -19,7 +19,7 @@ Files to remove from work repo root after copying in:
   coc-settings.json
 
 Git commands to run in work repo:
-  git submodule add <personal-dotfiles-url> personal
+  git submodule add https://github.com/jfeng94/dotfiles personal
   git rm --cached .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
   rm .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
   # copy in the files from this directory

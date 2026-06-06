@@ -3,6 +3,8 @@
 
 [user]
 	email = jerry.feng@skydio.com
+	# Override signingKey here if work machine uses a different SSH key (e.g. YubiKey)
+	# signingKey = ~/.ssh/id_work_ed25519.pub
 
 [pull]
 	rebase = true

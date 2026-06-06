@@ -2,8 +2,8 @@
 " Sourced at end of ~/.vimrc (after vundle#end and all personal settings)
 
 " Resolve work dotfiles dir from this symlinked file
-let s:work_dir = fnamemodify(resolve(expand('<sfile>')), ':h') . '/.dotfiles-work'
-" (Assumes work dotfiles cloned to ~/.dotfiles-work — adjust if different)
+" work_dir = the work dotfiles repo root (wherever .vimrc_local is symlinked from)
+let s:work_dir = fnamemodify(resolve(expand('<sfile>')), ':h')
 
 " LCM syntax highlighting (drone/robotics)
 let &rtp .= ',' . s:work_dir . '/vim-lcm'
@@ -11,3 +11,9 @@ let &rtp .= ',' . s:work_dir . '/vim-lcm'
 " Use YCM instead of CoC if preferred on work machines
 " Uncomment to override:
 " let g:completion_engine = 'ycm'
+
+" Source work-specific SkyRG config files
+let s:skyrg_work = s:work_dir . '/skyrg'
+for s:f in glob(s:skyrg_work . '/*.vim', 0, 1)
+  execute 'source' s:f
+endfor

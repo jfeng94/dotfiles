@@ -1,6 +1,7 @@
 [user]
 	name = Jerry Feng
 	email = jry@feng.codes
+	signingKey = ~/.ssh/id_ed25519.pub
 	# Override in ~/.gitconfig_local for work machines
 
 [core]
@@ -27,6 +28,4 @@
 [init]
 	defaultBranch = main
 
-# Machine-local overrides: work email, signing key, credential helpers, etc.
-[include]
-	path = ~/.gitconfig_local
+# Machine-local overrides: work email, signing key, credential helpe
