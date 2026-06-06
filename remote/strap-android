@@ -1,0 +1,73 @@
+#!/bin/sh
+# remote/strap-android — Minimal bootstrap for Android/toybox remotes.
+#
+# Constraints:
+#   - toybox sh (ash-like), NOT bash — no [[ ]], no arrays, no $'...'
+#   - Extremely limited coreutils (toybox subset)
+#   - No package manager, no internet access usually
+#   - adb shell or direct ssh to device
+#   - May be read-only filesystem except /data/local/tmp
+#
+# Usage (from your machine):
+#   adb shell < ~/.dotfiles/remote/strap-android
+#   # or
+#   adb push ~/.dotfiles/remote/strap-android /data/local/tmp/strap
+#   adb shell sh /data/local/tmp/strap
+#   # clean up when done:
+#   adb shell rm /data/local/tmp/strap ~/.vimrc 2>/dev/null; true
+
+STRAP_TMP="/data/local/tmp/strap-$$"
+mkdir -p "$STRAP_TMP" 2>/dev/null || STRAP_TMP="/tmp/strap-$$"
+mkdir -p "$STRAP_TMP"
+
+cleanup() {
+    rm -rf "$STRAP_TMP"
+    # Only remove vimrc if we created it
+    if grep -q "strap-android-marker" "$HOME/.vimrc" 2>/dev/null; then
+        rm -f "$HOME/.vimrc"
+    fi
+}
+# toybox trap is limited — EXIT may not work, rely on explicit cleanup
+trap cleanup EXIT HUP INT TERM
+
+# ============================================================
+# Minimal vimrc for vi (not full vim — keep it compatible)
+# ============================================================
+cat > "$HOME/.vimrc" << 'VIMEOF'
+" strap-android-marker
+set nocompatible
+set noswapfile
+set number
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set ignorecase
+set backspace=indent,eol,start
+syntax on
+VIMEOF
+
+# ============================================================
+# Shell aliases for this session (POSIX only)
+# ============================================================
+alias ll='ls -la'
+alias la='ls -A'
+alias ..='cd ..'
+alias grep='grep --color=auto'
+EDITOR=vi
+export EDITOR
+
+# Prompt (POSIX PS1, no $() in prompt — toybox may not support it)
+PS1='[android] $(pwd) $ '
+export PS1
+
+echo "[strap-android] Ready. vi config installed."
+echo "[strap-android] Run 'sh /data/local/tmp/strap-*/cleanup.sh' to remove artifacts."
+
+# Write explicit cleanup script since trap may not fire reliably
+cat > "$STRAP_TMP/cleanup.sh" << CLEANEOF
+#!/bin/sh
+rm -rf "$STRAP_TMP"
+grep -q "strap-android-marker" "$HOME/.vimrc" 2>/dev/null && rm -f "$HOME/.vimrc"
+echo "Cleaned up."
+CLEANEOF
+chmod +x "$STRAP_TMP/cleanup.sh"

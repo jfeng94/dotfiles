@@ -1,0 +1,11 @@
+# .gitconfig_local — Work machine git identity
+# Included by ~/.gitconfig via [include] path = ~/.gitconfig_local
+
+[user]
+	email = jerry.feng@skydio.com
+
+[pull]
+	rebase = true
+
+[rebase]
+	autoStash = true

@@ -1,0 +1,12 @@
+" .vimrc_plugins_local — Work-specific Vundle plugin declarations
+" Sourced INSIDE vundle#begin/end in ~/.vimrc — Plugin calls work here.
+
+" Djinni cross-language interface definitions (Skydio uses this)
+Plugin 'r0mai/vim-djinni'
+
+" Android / mobile language support
+Plugin 'udalov/kotlin-vim'
+Plugin 'keith/swift.vim'
+
+" ANSI escape sequence rendering (for drone process log viewing)
+Plugin 'powerman/vim-plugin-AnsiEsc'

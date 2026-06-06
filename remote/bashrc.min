@@ -1,0 +1,38 @@
+# bashrc.min — Minimal shell config for remote sessions
+# Source this: source ~/.dotfiles/remote/bashrc.min
+
+parse_git_branch() {
+  git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+
+# Visually distinct prompt so you know you're on a remote
+export PS1="\[\033[0;31m\][remote]\[\033[0m\] \u@\h \[\033[1;35m\]\W\[\033[32m\]\$(parse_git_branch)\[\033[00m\] $ "
+
+export EDITOR=vim
+
+# Listing
+alias ll='ls -la'
+alias la='ls -A'
+alias lt='ls -lat'
+
+# Navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+
+# Safety
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Git
+alias gs='git status'
+alias gd='git diff'
+alias gl='git log --oneline -20'
+alias ga='git add'
+alias gc='git commit'
+
+# Colorize
+alias grep='grep --color=auto'
+alias diff='diff --color=auto'
+
+export PATH=$HOME/.local/bin:$PATH

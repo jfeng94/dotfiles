@@ -1,0 +1,32 @@
+[user]
+	name = Jerry Feng
+	email = jry@feng.codes
+	# Override in ~/.gitconfig_local for work machines
+
+[core]
+	commentchar = ";"
+
+[alias]
+	lg  = log --oneline --decorate --graph
+	st  = status -sb
+	co  = checkout
+	br  = branch
+	df  = diff
+	dfs = diff --staged
+	last = log -1 HEAD
+
+[color]
+	ui = auto
+
+[pull]
+	rebase = false
+
+[push]
+	default = simple
+
+[init]
+	defaultBranch = main
+
+# Machine-local overrides: work email, signing key, credential helpers, etc.
+[include]
+	path = ~/.gitconfig_local

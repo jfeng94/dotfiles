@@ -1,0 +1,27 @@
+work-overlay/
+=============
+Staging area for Phase 2 — files to be moved into the work dotfiles repo
+(jerry-feng-skydio/dotfiles).
+
+Files to copy into work repo root:
+  .bashrc_local         → ~/.bashrc_local (work-specific bash config)
+  .vimrc_local          → ~/.vimrc_local  (vim-lcm rtp, work vim settings)
+  .vimrc_plugins_local  → ~/.vimrc_plugins_local (djinni/kotlin/swift/AnsiEsc)
+  .gitconfig_local      → ~/.gitconfig_local (work git identity)
+  setup.sh              → replaces existing work setup.sh
+
+Files to remove from work repo root after copying in:
+  .bashrc
+  .vimrc
+  .tmux.conf
+  .gitconfig
+  .inputrc
+  coc-settings.json
+
+Git commands to run in work repo:
+  git submodule add <personal-dotfiles-url> personal
+  git rm --cached .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
+  rm .bashrc .vimrc .tmux.conf .gitconfig .inputrc coc-settings.json
+  # copy in the files from this directory
+  git add .
+  git commit -m "refactor: delegate to personal dotfiles submodule"

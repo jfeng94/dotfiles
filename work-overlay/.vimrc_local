@@ -1,0 +1,13 @@
+" .vimrc_local — Work machine vim overrides
+" Sourced at end of ~/.vimrc (after vundle#end and all personal settings)
+
+" Resolve work dotfiles dir from this symlinked file
+let s:work_dir = fnamemodify(resolve(expand('<sfile>')), ':h') . '/.dotfiles-work'
+" (Assumes work dotfiles cloned to ~/.dotfiles-work — adjust if different)
+
+" LCM syntax highlighting (drone/robotics)
+let &rtp .= ',' . s:work_dir . '/vim-lcm'
+
+" Use YCM instead of CoC if preferred on work machines
+" Uncomment to override:
+" let g:completion_engine = 'ycm'

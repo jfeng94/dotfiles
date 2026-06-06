@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# remote/strap-linux — Bootstrap a Linux remote with minimal dotfiles, no artifacts left behind.
+#
+# Usage:
+#   # Copy and auto-cleanup:
+#   bash <(cat ~/.dotfiles/remote/strap-linux)
+#
+#   # Or over SSH (single command):
+#   ssh user@host "$(cat ~/.dotfiles/remote/strap-linux)"
+#
+#   # Or pipe directly:
+#   cat ~/.dotfiles/remote/strap-linux | ssh user@host bash
+#
+# What it does:
+#   1. Writes ~/.vimrc and ~/.bashrc.remote to /tmp/dotfiles-strap-$$/ (not $HOME)
+#   2. Sources the bashrc in the current shell
+#   3. Registers an EXIT trap to delete everything when the session ends
+
+set -euo pipefail
+
+STRAP_DIR="/tmp/dotfiles-strap-$$"
+mkdir -p "$STRAP_DIR"
+
+cleanup() {
+    rm -rf "$STRAP_DIR"
+    # Remove the vimrc only if it was created by us (check for our marker)
+    if grep -q '" dotfiles-strap-marker' ~/.vimrc 2>/dev/null; then
+        rm -f ~/.vimrc
+    fi
+    echo "[strap] Cleaned up."
+}
+trap cleanup EXIT
+
+# ============================================================
+# Write minimal vimrc
+# ============================================================
+cat > ~/.vimrc << 'VIMRC'
+" dotfiles-strap-marker
+set nocompatible
+set noswapfile
+set number
+set expandtab
+set shiftwidth=4 softtabstop=4 tabstop=4
+set ignorecase smartcase incsearch hlsearch
+set backspace=indent,eol,start
+set autoindent
+set undofile
+set undodir=/tmp/.vim-undo-$$
+silent! call mkdir(&undodir, 'p')
+syntax on
+set background=dark
+" Fast escape
+set -sg escape-time 0
+" Status line
+set laststatus=2
+set statusline=%f\ %m%r%h%w\ [%Y]\ [%{&ff}]\ %=\ [%l/%L\ %c]
+VIMRC
+
+# ============================================================
+# Write shell aliases/helpers for this session
+# ============================================================
+cat > "$STRAP_DIR/.bashrc.remote" << 'RCEOF'
+# dotfiles remote session helpers
+
+parse_git_branch() {
+  git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+}
+export PS1="\[\033[0;33m\][remote]\[\033[0m\] \u@\h \[\033[1;35m\]\W\[\033[32m\]\$(parse_git_branch)\[\033[00m\] $ "
+
+alias ll='ls -la'
+alias la='ls -A'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias grep='grep --color=auto'
+
+export EDITOR=vim
+RCEOF
+
+# Source it in this shell
+# shellcheck disable=SC1090
+source "$STRAP_DIR/.bashrc.remote"
+
+echo "[strap] Remote session ready. Vimrc and shell helpers active."
+echo "[strap] Everything will be cleaned up when this shell exits."
+echo ""
+echo "  Type 'exit' to end the session and remove all artifacts."
+
+# Drop into an interactive shell if we're not already in one
+# (Only relevant when the script is executed directly, not sourced)
+if [[ $- != *i* ]]; then
+    exec bash --rcfile "$STRAP_DIR/.bashrc.remote"
+fi

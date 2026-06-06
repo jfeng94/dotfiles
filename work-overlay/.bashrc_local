@@ -1,0 +1,154 @@
+# .bashrc_local — Skydio work machine overrides
+# Sourced at end of ~/.bashrc (personal dotfiles)
+
+# ============================================================
+# SSH / YubiKey
+# ============================================================
+
+alias yubact="ssh-add -D && ssh-add -e /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so; ssh-add -s /usr/lib/x86_64-linux-gnu/opensc-pkcs11.so"
+if [ -f /usr/local/bin/ssh-find-agent.sh ]; then
+    . /usr/local/bin/ssh-find-agent.sh
+    ssh_find_agent -a
+fi
+
+# ============================================================
+# Prompt — override personal default with work color scheme
+# ============================================================
+
+case "$(hostname)" in
+  *work*|*skydio*|*corp*)
+    export PS1="\u@\h \[\033[1;33m\]\W\[\033[36m\]\$(parse_git_branch)\[\033[00m\] $ "
+    ;;
+esac
+
+# ============================================================
+# Powerline
+# ============================================================
+
+if [ -f /usr/share/powerline/bindings/bash/powerline.sh ]; then
+  powerline-daemon -q
+  POWERLINE_BASH_CONTINUATION=1
+  POWERLINE_BASH_SELECT=1
+  source /usr/share/powerline/bindings/bash/powerline.sh
+fi
+
+# ============================================================
+# Android / Skydio SDK paths
+# ============================================================
+
+export PATH=/home/skydio/software/android-sdk-skydio-v2/platform-tools:$PATH
+export PATH=~/Android/Sdk/platform-tools:${PATH}
+
+# ============================================================
+# Work identity / credentials
+# ============================================================
+
+export CLOUD_CLIENT_EMAIL="jerry.feng@skydio.com"
+export AIRCAM_WEBRTC_NETWORK_INTERFACE_NAME="enp6s0"
+export AWS_PROFILE=default
+
+# ============================================================
+# Tags — Skydio-specific excludes on top of personal ctaggen
+# ============================================================
+
+alias ctaggen='ctags -R \
+  --exclude=.git \
+  --exclude="build/build/*" \
+  --exclude="build/clones/*" \
+  --exclude="build/deploy/*" \
+  --exclude="build/doc/*" \
+  --exclude="build/images/*" \
+  --exclude="build/install/*" \
+  --exclude="build/stamps/*" \
+  --exclude="build/web/*" \
+  --exclude="build/*.json" \
+  --exclude=clion-aircam-make-relwithdebinfo \
+  --exclude="third_party*" \
+  --exclude="shared/third_party*" \
+  --exclude=graveyard \
+  --exclude="tools/lcmtype_auto_translation/*"'
+
+# ============================================================
+# Aircam / repo helpers
+# ============================================================
+
+alias gac='cd ~/aircam'
+
+set_aircam_root() {
+    echo "Setting AIRCAM_ROOT to $(pwd)"
+    export AIRCAM_ROOT="$(pwd)"
+    export PATH=${AIRCAM_ROOT}/build/host_aircam/bin:${PATH}
+    export PATH=${AIRCAM_ROOT}/build/host_third_party/bin:${PATH}
+    echo $PATH
+}
+
+# ============================================================
+# Drone / vehicle helpers
+# ============================================================
+
+deploy_r47() {
+    ssh qcu -t "sudo rm -rf /home/skydio/bazel/aircam.runfiles/aircam/launch/vehicle_deploy/opencl_kernels/*"
+    ./skyrun bazel bazel_deploy --ignore_flashpack_version
+}
+
+blt() {
+    ssh qcu -t "bot-lcm-tunnel &"
+    ./skyrun bin bot-lcm-tunnel 192.168.11.1
+}
+
+fpl() {
+  local host="c38"
+  local needle="$1"
+
+  if [[ -z "$needle" ]]; then
+    echo "Usage: fpl <process_name>" >&2
+    return 1
+  fi
+
+  ssh -t "$host" 'bash -s' -- "$needle" << 'SSHEOF'
+set -euo pipefail
+needle="$1"
+pids=$(
+  top -b -n 1 |
+    awk -v needle="$needle" '
+      $1 ~ /^[0-9]+$/ {
+        cmd = ""
+        for (i = 12; i <= NF; i++) {
+          cmd = cmd (i == 12 ? "" : " ") $i
+        }
+        if (index(cmd, needle) &&
+            cmd !~ /^grep / &&
+            cmd !~ /^awk / &&
+            cmd !~ /^bash -s /) {
+          print $1
+        }
+      }
+    '
+)
+if [[ -z "$pids" ]]; then
+  echo "No matching processes found for: $needle" >&2
+  exit 1
+fi
+pid_regex=$(echo "$pids" | paste -sd'|' -)
+echo "Matching PIDs: $(echo "$pids" | paste -sd',' -)" >&2
+logcat -v threadtime | awk -v pids="$pid_regex" '$3 ~ "^(" pids ")$" { print }'
+SSHEOF
+}
+
+# ============================================================
+# Skydio script aliases
+# ============================================================
+
+alias certc18='bazel run //tools/cloud_api/client_utils:create_certificate -- cert $(curl -s 192.168.20.1:80/hostname)'
+alias watch_flight_deck="$DOTFILES_DIR/scripts/skydio/watch_vehicle_flight_deck.sh"
+alias grep_flight_deck="$DOTFILES_DIR/scripts/skydio/grep_flight_deck.sh"
+alias lazy_ota="$DOTFILES_DIR/scripts/skydio/lazy_ota.sh"
+alias decrypt="./skyrun bin decrypt_debug_logs_tar"
+
+# ============================================================
+# revup — override personal aliases with skyrun wrapper
+# ============================================================
+
+alias revupl="./skyrun bin revup upload"
+alias revupa="./skyrun bin revup amend"
+alias revupr="./skyrun bin revup restack"
