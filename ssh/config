@@ -2,7 +2,7 @@
 # Work-specific hosts live in the private overlay repo (ssh/config.work)
 
 Host foundry
-    HostName ec2-52-53-240-163.us-west-1.compute.amazonaws.com
+    HostName ec2-52-53-97-71.us-west-1.compute.amazonaws.com
     User ec2-user
     IdentityFile ~/.ssh/foundry_ed25519
     IdentitiesOnly yes
