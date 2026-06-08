@@ -180,9 +180,14 @@ fi
 ####################################################################################################
 setup_ssh_config() {
     local ssh_config="$HOME/.ssh/config"
-    local include_line="Include $DOTFILES_DIR/ssh/config"
+    # Copy to Linux home fs — SSH rejects Include paths on Windows-mounted filesystems (WSL)
+    local personal_config="$HOME/.ssh/config.personal"
+    local include_line="Include $personal_config"
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
+    # Always refresh the copy so changes in dotfiles take effect on re-run
+    cp "$DOTFILES_DIR/ssh/config" "$personal_config"
+    chmod 600 "$personal_config"
     if [[ ! -f "$ssh_config" ]] || ! grep -qF "$include_line" "$ssh_config"; then
         # Include must be at the top of ssh/config to apply to all hosts
         local tmp
@@ -191,7 +196,9 @@ setup_ssh_config() {
         [[ -f "$ssh_config" ]] && cat "$ssh_config" >> "$tmp"
         mv "$tmp" "$ssh_config"
         chmod 600 "$ssh_config"
-        echo "[setup] Added SSH config include → $DOTFILES_DIR/ssh/config"
+        echo "[setup] SSH config: ~/.ssh/config.personal updated and included"
+    else
+        echo "[setup] SSH config: ~/.ssh/config.personal refreshed"
     fi
 }
 
