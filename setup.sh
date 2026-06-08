@@ -185,6 +185,10 @@ setup_ssh_config() {
     local include_line="Include $personal_config"
     mkdir -p "$HOME/.ssh"
     chmod 700 "$HOME/.ssh"
+    # Remove any stale Include pointing directly at dotfiles (Windows-mount path)
+    if [[ -f "$ssh_config" ]]; then
+        sed -i '/Include.*dotfiles\/ssh\/config/d' "$ssh_config" 2>/dev/null || true
+    fi
     # Always refresh the copy so changes in dotfiles take effect on re-run
     cp "$DOTFILES_DIR/ssh/config" "$personal_config"
     chmod 600 "$personal_config"
