@@ -181,6 +181,28 @@ if $soft_reset; then
 fi
 
 ####################################################################################################
+# Step 1b — SSH config include
+####################################################################################################
+setup_ssh_config() {
+    local ssh_config="$HOME/.ssh/config"
+    local include_line="Include $DOTFILES_DIR/ssh/config"
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+    if [[ ! -f "$ssh_config" ]] || ! grep -qF "$include_line" "$ssh_config"; then
+        # Include must be at the top of ssh/config to apply to all hosts
+        local tmp
+        tmp=$(mktemp)
+        echo "$include_line" > "$tmp"
+        [[ -f "$ssh_config" ]] && cat "$ssh_config" >> "$tmp"
+        mv "$tmp" "$ssh_config"
+        chmod 600 "$ssh_config"
+        echo "[setup] Added SSH config include → $DOTFILES_DIR/ssh/config"
+    fi
+}
+
+setup_ssh_config
+
+####################################################################################################
 # Step 2 — Install packages
 ####################################################################################################
 install_packages() {
