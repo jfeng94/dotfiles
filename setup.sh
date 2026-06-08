@@ -175,11 +175,6 @@ if $do_work; then
     fi
 fi
 
-if $soft_reset; then
-    echo "[setup] Soft reset complete."
-    exit 0
-fi
-
 ####################################################################################################
 # Step 1b — SSH config include
 ####################################################################################################
@@ -201,6 +196,12 @@ setup_ssh_config() {
 }
 
 setup_ssh_config
+
+if $soft_reset; then
+    echo "[setup] Soft reset complete."
+    exit 0
+fi
+
 
 ####################################################################################################
 # Step 2 — Install packages
